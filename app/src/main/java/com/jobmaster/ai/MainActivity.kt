@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.jobmaster.ai.ui.theme.JobMasterAITheme
 
@@ -31,32 +32,67 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun JobMasterApp() {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
     Scaffold(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Dashboard, contentDescription = null) },
+                    icon = { Icon(Icons.Default.Dashboard, contentDescription = "Dashboard") },
                     label = { Text("Dashboard") },
-                    selected = false,
-                    onClick = { navController.navigate("dashboard") }
+                    selected = currentRoute == "dashboard",
+                    onClick = {
+                        if (currentRoute != "dashboard") {
+                            navController.navigate("dashboard") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    icon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     label = { Text("Search") },
-                    selected = false,
-                    onClick = { navController.navigate("search") }
+                    selected = currentRoute == "search",
+                    onClick = {
+                        if (currentRoute != "search") {
+                            navController.navigate("search") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Description, contentDescription = null) },
+                    icon = { Icon(Icons.Default.Description, contentDescription = "Resume") },
                     label = { Text("Resume") },
-                    selected = false,
-                    onClick = { navController.navigate("resume") }
+                    selected = currentRoute == "resume",
+                    onClick = {
+                        if (currentRoute != "resume") {
+                            navController.navigate("resume") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                     label = { Text("Settings") },
-                    selected = false,
-                    onClick = { navController.navigate("settings") }
+                    selected = currentRoute == "settings",
+                    onClick = {
+                        if (currentRoute != "settings") {
+                            navController.navigate("settings") {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    }
                 )
             }
         }
@@ -100,22 +136,37 @@ fun DashboardScreen() {
 
 @Composable
 fun SearchScreen() {
+    var keywords by remember { mutableStateOf("") }
+    var location by remember { mutableStateOf("") }
+    var searching by remember { mutableStateOf(false) }
+
     Column(Modifier.fillMaxSize().padding(16.dp)) {
         Text("Job Search", style = MaterialTheme.typography.headlineMedium)
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = keywords,
+            onValueChange = { keywords = it },
             label = { Text("Keywords") },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            singleLine = true
         )
         OutlinedTextField(
-            value = "",
-            onValueChange = {},
+            value = location,
+            onValueChange = { location = it },
             label = { Text("Location / ZIP") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
-        Button(onClick = {}, modifier = Modifier.padding(top = 16.dp)) {
-            Text("Search")
+        Button(
+            onClick = { searching = true },
+            modifier = Modifier.padding(top = 16.dp),
+            enabled = keywords.isNotBlank()
+        ) {
+            Text(if (searching) "Searching..." else "Search")
+        }
+        if (searching) {
+            Spacer(Modifier.height(16.dp))
+            Text("Searching for \"$keywords\" near \"$location\"...", style = MaterialTheme.typography.bodyMedium)
+            Text("Sources: Indeed, LinkedIn, ZipRecruiter, Glassdoor", style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(16.dp))
         Text("Sources: Indeed, LinkedIn, ZipRecruiter, Glassdoor + more coming", style = MaterialTheme.typography.bodySmall)
